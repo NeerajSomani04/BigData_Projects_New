@@ -1,1 +1,30 @@
-Hello this is test file.
+Below are commands used to perform some activity -->
+
+Below command to create Hive database --> 
+CREATE DATABASE IF NOT EXISTS Viacom_Test; 
+
+CREATE TABLE comment_text (
+message STRING,
+id STRING)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+Load data local inpath '/home/dkothari/vi-com/BigData_Projects_New/comment_text' into table comment_text;
+
+describe formatted comment_text; --> this command can be used to see the details of hive table.
+
+Below is the hive dataware house location for our database -->
+hdfs://nn01.itversity.com:8020/apps/hive/warehouse/viacom_test.db/comment_text
+
+hdfs dfs -put /home/dkothari/vi-com/BigData_Projects_New/post_meta/ vi-com/BigData_Project/post_meta
+
+Below command is for post_meta parquet files --  COMPRESSED WITH SNAPPY
+
+CREATE EXTERNAL TABLE post_meta (post_h_id STRING, post_created_time TIMESTAMP, name_h_id STRING, type STRING) 
+STORED AS PARQUET 
+TBLPROPERTIES ('PARQUET.COMPRESS'='SNAPPY');
+
+Load data local inpath '/home/dkothari/vi-com/BigData_Projects_New/post_meta' into table post_meta;
+
+describe formatted post_meta;
