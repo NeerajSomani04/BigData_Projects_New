@@ -28,3 +28,18 @@ TBLPROPERTIES ('PARQUET.COMPRESS'='SNAPPY');
 Load data local inpath '/home/dkothari/vi-com/BigData_Projects_New/post_meta' into table post_meta;
 
 describe formatted post_meta;
+
+Drop table comment_info_jsonl;
+CREATE EXTERNAL TABLE comment_info_jsonl (
+text STRING)
+ROW FORMAT SERDE 'org.openx.data.jsonserde.JsonSerDe';
+
+I downloaded jar from below path --
+http://snowplow-hosted-assets.s3.amazonaws.com/third-party/rcongiu/json-serde-1.1.6-jar-with-dependencies.jar
+
+add jar /home/dkothari/json-serde-1.1.6-jar-with-dependencies.jar; -- this command added the jar in hive consol.
+
+-- this jar is not working -- 'org.apache.hive.hcatalog.data.JsonSerDe'
+we might need this serde -- org.openx.data.jsonserde.JsonSerDe 
+
+Load data local inpath '/home/dkothari/vi-com/BigData_Projects_New/comment_info_jsonl' into table comment_info_jsonl;
