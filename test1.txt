@@ -43,3 +43,25 @@ add jar /home/dkothari/json-serde-1.1.6-jar-with-dependencies.jar; -- this comma
 we might need this serde -- org.openx.data.jsonserde.JsonSerDe 
 
 Load data local inpath '/home/dkothari/vi-com/BigData_Projects_New/comment_info_jsonl' into table comment_info_jsonl;
+
+
+Links for comments and posts Hive data model 
+https://blog.cloudera.com/blog/2012/11/analyzing-twitter-data-with-hadoop-part-3-querying-semi-structured-data-with-hive/
+
+https://www.google.com/search?q=relational+data+model+to+store+facebook+post+comments&tbm=isch&source=hp&safe=active&sa=X&ved=2ahUKEwiW2v2M7IzgAhXLT98KHWmnDscQsAR6BAgAEAE
+
+https://data.stackexchange.com/stackoverflow/query/new
+
+https://dba.stackexchange.com/questions/174878/how-to-store-likes-and-comments-of-posts-in-database
+
+Below are few links to work on ElasticSearch for the data load and analysis:
+https://gist.github.com/vinodnerella/15dabed07ac4815e4792d63cf8e4ed51
+
+https://medium.com/@ashish_fagna/getting-started-with-elasticsearch-creating-indices-inserting-values-and-retrieving-data-e3122e9b12c6
+
+https://github.com/Moshe/elasticsearch_loader
+
+Elastic Search deep dive on linux academy
+https://dzone.com/articles/what-is-elasticsearch-and-how-it-can-be-useful
+
+https://www.elastic.co/blog/found-elasticsearch-as-nosql
