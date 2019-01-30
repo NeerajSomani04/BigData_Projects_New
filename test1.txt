@@ -1,3 +1,10 @@
+Couple of Questions:
+
+1) In section "Queries to run", its mention that Comment_ID must match across all 3 dataset but looks like Comment_ID is not present in "Post_meta.zip" file data set. Hence, comment_ID is present in 2 data sets "comment_text" and "comment_info_jsonl". Is this understanding correct? I need to consider it only for these 2 data sets.
+
+2) 
+
+
 Below are commands used to perform some activity -->
 
 Below command to create Hive database --> 
@@ -75,6 +82,16 @@ we might need this serde -- org.openx.data.jsonserde.JsonSerDe
 Load data local inpath '/home/dkothari/vi-com/BigData_Projects_New/comment_info_jsonl' into table comment_info_jsonl;
 
 
+Below are queries:
+1) this query is used to get count of posts :
+select count(distinct post_h_id) from (select explode(posts.data.h_id) as post_h_id from comment_info_jsonl) as temp; -- 297 distinct
+select count(distinct post_h_id) from post_meta; -- 3531 distinct
+
+select count(distinct PM.post_h_id)
+from (select explode(posts.data.h_id) as post_h_id from comment_info_jsonl) as CIJ 
+INNER JOIN post_meta as PM
+on CIJ.post_h_id = PM.post_h_id; -- 282 distinct 
+
 Links for comments and posts Hive data model 
 
 Nice hive example article:
@@ -89,6 +106,11 @@ https://www.google.com/search?q=relational+data+model+to+store+facebook+post+com
 https://data.stackexchange.com/stackoverflow/query/new
 
 https://dba.stackexchange.com/questions/174878/how-to-store-likes-and-comments-of-posts-in-database
+
+https://www.slideshare.net/cloudera/nested-types-in-impala-55344174
+
+https://www.cloudera.com/documentation/enterprise/5-5-x/topics/impala_complex_types.html
+https://www.cloudera.com/documentation/enterprise/5-5-x/topics/impala_complex_types.html#complex_types_ex_hive_etl
 
 Below are few links to work on ElasticSearch for the data load and analysis:
 https://gist.github.com/vinodnerella/15dabed07ac4815e4792d63cf8e4ed51
