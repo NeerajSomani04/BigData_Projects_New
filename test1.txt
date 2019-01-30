@@ -3,7 +3,7 @@ Below are commands used to perform some activity -->
 Below command to create Hive database --> 
 CREATE DATABASE IF NOT EXISTS Viacom_Test; 
 
-CREATE TABLE comment_text (
+CREATE TABLE IF NOT EXISTS comment_text (
 message STRING,
 id STRING)
 ROW FORMAT DELIMITED
@@ -21,7 +21,9 @@ hdfs dfs -put /home/dkothari/vi-com/BigData_Projects_New/post_meta/ vi-com/BigDa
 
 Below command is for post_meta parquet files --  COMPRESSED WITH SNAPPY
 
-CREATE EXTERNAL TABLE post_meta (post_h_id STRING, post_created_time TIMESTAMP, name_h_id STRING, type STRING) 
+Drop table post_meta;
+
+CREATE EXTERNAL TABLE IF NOT EXISTS post_meta (post_h_id STRING, post_created_time TIMESTAMP, name_h_id STRING, type STRING) 
 STORED AS PARQUET 
 TBLPROPERTIES ('PARQUET.COMPRESS'='SNAPPY');
 
@@ -30,23 +32,57 @@ Load data local inpath '/home/dkothari/vi-com/BigData_Projects_New/post_meta' in
 describe formatted post_meta;
 
 Drop table comment_info_jsonl;
-CREATE EXTERNAL TABLE comment_info_jsonl (
+
+CREATE EXTERNAL TABLE IF NOT EXISTS comment_info_jsonl (
 text STRING)
-ROW FORMAT SERDE 'org.openx.data.jsonserde.JsonSerDe';
+ROW FORMAT SERDE 'org.apache.hive.hcatalog.data.JsonSerDe';
+
+CREATE EXTERNAL TABLE IF NOT EXISTS comment_info_jsonl (
+h_id STRING
+, posts struct< 
+data: array < struct <
+comments: struct < 
+data: array< struct < 
+comment_count: INT
+, comments: struct < 
+data: array < struct < 
+comment_count: INT
+, created_time: STRING
+, h_id: STRING
+, parent: struct < 
+h_id: STRING
+>
+, up_likes: INT
+> > >
+, created_time: STRING
+, h_id: STRING
+, up_likes: INT 
+> > >
+, h_id: STRING 
+> > >
+)
+ROW FORMAT SERDE 'org.apache.hive.hcatalog.data.JsonSerDe'
+STORED AS TEXTFILE;
 
 I downloaded jar from below path --
 http://snowplow-hosted-assets.s3.amazonaws.com/third-party/rcongiu/json-serde-1.1.6-jar-with-dependencies.jar
 
 add jar /home/dkothari/json-serde-1.1.6-jar-with-dependencies.jar; -- this command added the jar in hive consol.
 
--- this jar is not working -- 'org.apache.hive.hcatalog.data.JsonSerDe'
+-- this serde is working -- 'org.apache.hive.hcatalog.data.JsonSerDe'
 we might need this serde -- org.openx.data.jsonserde.JsonSerDe 
 
 Load data local inpath '/home/dkothari/vi-com/BigData_Projects_New/comment_info_jsonl' into table comment_info_jsonl;
 
 
 Links for comments and posts Hive data model 
+
+Nice hive example article:
+https://medium.com/datadriveninvestor/analyzing-twitter-feeds-using-hive-7e074025f295
+
 https://blog.cloudera.com/blog/2012/11/analyzing-twitter-data-with-hadoop-part-3-querying-semi-structured-data-with-hive/
+
+https://github.com/rcongiu/Hive-JSON-Serde
 
 https://www.google.com/search?q=relational+data+model+to+store+facebook+post+comments&tbm=isch&source=hp&safe=active&sa=X&ved=2ahUKEwiW2v2M7IzgAhXLT98KHWmnDscQsAR6BAgAEAE
 
