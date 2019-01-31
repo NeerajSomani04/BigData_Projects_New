@@ -1,0 +1,6 @@
+Nice article:
+
+https://databricks.com/blog/2015/02/02/an-introduction-to-json-support-in-spark-sql.html
+
+https://stackoverflow.com/questions/29948789/how-to-parse-nested-json-objects-in-spark-sql
+
