@@ -133,17 +133,26 @@ lateral view explode(comments_data.comments.data) reply_exploded as reply_data
 where post_data.h_id = 'MTE0MDQzMTc1MzUyMDI3XzE1OTM4MDUzOTQwNDI0NTc'
 limit 5;
 
-
+Drop table comment_info_exploded;
 Create table comment_info_exploded as
 select 
 post_data.h_id as post_id,
 comments_data.comment_count,
 comments_data.up_likes as comment_like_count,
 comments_data.h_id as comment_id,
-comments_data.created_time as comment_created_time
+cast(from_unixtime(unix_timestamp(regexp_replace(comments_data.created_time, 'T',' '))) as timestamp) as comment_created_time
 from comment_info_jsonl 
 LATERAL VIEW explode(posts.data) exploded_post as post_data
 lateral view explode(post_data.comments.data) comments_exploded as comments_data;
+
+
+select cast(to_date(from_unixtime(unix_timestamp(regexp_replace('2018-06-05T08:02:59Z', 'T',' ')))) as date);
+
+yyyy-MM-dd'T'hh:mm:ssZ
+
+
+select cast(to_date(from_unixtime(unix_timestamp(comments_data.created_time, 'yyyy-MM-ddThh:mm:ssZ'))) as date)
+
 
 select * 
 from comment_info_exploded CFE 
@@ -152,6 +161,8 @@ on PM.post_h_id = CFE.post_id
 INNER JOIN comment_text CT
 ON CT.h_id = CFE.comment_id
 limit 5;
+
+
 
 
 Links for comments and posts Hive data model 
