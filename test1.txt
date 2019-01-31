@@ -10,9 +10,10 @@ Below are commands used to perform some activity -->
 Below command to create Hive database --> 
 CREATE DATABASE IF NOT EXISTS Viacom_Test; 
 
+Drop table comment_text;
 CREATE TABLE IF NOT EXISTS comment_text (
 message STRING,
-id STRING)
+h_id STRING)
 ROW FORMAT DELIMITED
 FIELDS TERMINATED BY ','
 STORED AS TEXTFILE;
@@ -81,6 +82,9 @@ we might need this serde -- org.openx.data.jsonserde.JsonSerDe
 
 Load data local inpath '/home/dkothari/vi-com/BigData_Projects_New/comment_info_jsonl' into table comment_info_jsonl;
 
+for cloudera -->
+Load data local inpath '/home/cloudera/vi-com/BigData_Projects_New/comment_info_jsonl' into table comment_info_jsonl;
+
 
 Below are queries:
 1) this query is used to get count of posts :
@@ -91,6 +95,19 @@ select count(distinct PM.post_h_id)
 from (select explode(posts.data.h_id) as post_h_id from comment_info_jsonl) as CIJ 
 INNER JOIN post_meta as PM
 on CIJ.post_h_id = PM.post_h_id; -- 282 distinct 
+
+Questions for Queries:
+
+1) Which day had the highest number of top level comments (excluding replies)?
+Solution:
+select 
+sum(comment_count) as total_comment_count
+group by created_time of top level comments
+order by total_comment_count desc 
+limit 1;
+
+
+
 
 Links for comments and posts Hive data model 
 
