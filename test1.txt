@@ -106,7 +106,52 @@ group by created_time of top level comments
 order by total_comment_count desc 
 limit 1;
 
+select 
+post_data.h_id,
+comments_data.comment_count,
+comments_data.up_likes
+from comment_info_jsonl 
+LATERAL VIEW explode(posts.data) exploded_post as post_data
+lateral view explode(post_data.comments.data) comments_exploded as comments_data
+limit 1;
 
+select 
+post_data.h_id as post_id,
+comments_data.comment_count,
+comments_data.up_likes as comment_like_count,
+comments_data.h_id as comment_id,
+comments_data.created_time as comment_created_time,
+reply_data.comment_count as reply_count,
+reply_data.created_time as reply_created_time,
+reply_data.h_id as reply_id,
+reply_data.parent.h_id as reply_parent_comment_id,
+reply_data.up_likes as reply_like_count
+from comment_info_jsonl 
+LATERAL VIEW explode(posts.data) exploded_post as post_data
+lateral view explode(post_data.comments.data) comments_exploded as comments_data
+lateral view explode(comments_data.comments.data) reply_exploded as reply_data
+where post_data.h_id = 'MTE0MDQzMTc1MzUyMDI3XzE1OTM4MDUzOTQwNDI0NTc'
+limit 5;
+
+
+Create table comment_info_exploded as
+select 
+post_data.h_id as post_id,
+comments_data.comment_count,
+comments_data.up_likes as comment_like_count,
+comments_data.h_id as comment_id,
+comments_data.created_time as comment_created_time
+from comment_info_jsonl 
+LATERAL VIEW explode(posts.data) exploded_post as post_data
+lateral view explode(post_data.comments.data) comments_exploded as comments_data;
+
+select * 
+from comment_info_exploded CFE 
+INNER JOIN post_meta PM
+on PM.post_h_id = CFE.post_id
+INNER JOIN comment_text CT
+ON CT.h_id = CFE.comment_id
+limit 5;
 
 
 Links for comments and posts Hive data model 
