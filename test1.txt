@@ -116,6 +116,8 @@ group by to_date(temp1.comment_created_time)
 order by total_comments desc
 limit 1;
 
+Result :- Date: 2018-01-10 (10-Jan-2018) , Total comments: 610
+
 ---------------------------
 Below are few SQLs used to create above solution.
 
