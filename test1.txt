@@ -100,6 +100,25 @@ Questions for Queries:
 
 1) Which day had the highest number of top level comments (excluding replies)?
 Solution:
+
+select to_date(temp1.comment_created_time) as comment_created_time, sum(temp1.comment_count) as total_comments
+from 
+(select CIE.*,
+row_number() over (partition by comment_id order by comment_created_time desc, comment_like_count desc, comment_count desc) as row_num
+from comment_info_exploded CIE 
+INNER JOIN post_meta PM
+on PM.post_h_id = CIE.post_id
+INNER JOIN comment_text CT
+ON CT.h_id = CIE.comment_id) 
+as temp1
+where temp1.row_num = 1
+group by to_date(temp1.comment_created_time)
+order by total_comments desc
+limit 1;
+
+---------------------------
+Below are few SQLs used to create above solution.
+
 select 
 sum(comment_count) as total_comment_count
 group by created_time of top level comments
