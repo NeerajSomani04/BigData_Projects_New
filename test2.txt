@@ -22,7 +22,7 @@ Use analyze commands like below:
 
 analyze table tweets compute statistics for columns;
 
-some other tips -->
+some other tips --> https://www.qubole.com/blog/5-tips-for-efficient-hive-queries/
 Tip 1: Partitioning Hive Tables
 
 for example:- partition based on "comment_created_date" and "reply_date"
@@ -39,3 +39,9 @@ If the tables needs to be joined than the table can be bucketed on joining colum
 SET hive.optimize.bucketmapjoin=true;
 
 Than The SELECT statement then can include a MAPJOIN statement
+
+Tip 3: Bucket Sampling
+Tip 4: Block Sampling
+Tip 5: Parallel Execution  
+
+SET hive.exce.parallel=true;.
