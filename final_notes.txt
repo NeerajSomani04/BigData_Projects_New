@@ -1,0 +1,66 @@
+Below command to create Hive database --> 
+
+CREATE DATABASE IF NOT EXISTS Viacom_Test; 
+
+Below command to create hive table for comment_text dataset.
+
+-- Drop table comment_text; -- use this command to drop table if needed.
+
+CREATE TABLE IF NOT EXISTS comment_text (
+message STRING,
+h_id STRING)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+Use below command to load data from local system to hive table.
+
+Load data local inpath '/home/dkothari/vi-com/BigData_Projects_New/comment_text' into table comment_text;
+
+Below command is to create table for post_meta dataset files.
+
+CREATE EXTERNAL TABLE IF NOT EXISTS post_meta (post_h_id STRING, post_created_time TIMESTAMP, name_h_id STRING, type STRING) 
+STORED AS PARQUET 
+TBLPROPERTIES ('PARQUET.COMPRESS'='SNAPPY');
+
+below command is to load data from local system to post_meta tables.
+
+Load data local inpath '/home/dkothari/vi-com/BigData_Projects_New/post_meta' into table post_meta;
+
+Below command is to create table for comment_info_jsonl dataset.
+
+CREATE EXTERNAL TABLE IF NOT EXISTS comment_info_jsonl (
+h_id STRING
+, posts struct< 
+data: array < struct <
+comments: struct < 
+data: array< struct < 
+comment_count: INT
+, comments: struct < 
+data: array < struct < 
+comment_count: INT
+, created_time: STRING
+, h_id: STRING
+, parent: struct < 
+h_id: STRING
+>
+, up_likes: INT
+> > >
+, created_time: STRING
+, h_id: STRING
+, up_likes: INT 
+> > >
+, h_id: STRING 
+> > >
+)
+ROW FORMAT SERDE 'org.apache.hive.hcatalog.data.JsonSerDe'
+STORED AS TEXTFILE;
+
+
+Load data local inpath '/home/cloudera/vi-com/BigData_Projects_New/comment_info_jsonl' into table comment_info_jsonl;
+
+
+run below command to add json serde to parse json files properly.
+
+add jar /usr/lib/hive-hcatalog/share/hcatalog/hive-hcatalog-core.jar ;
+
