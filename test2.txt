@@ -1,6 +1,41 @@
-Nice article:
+Hive best practice tips -->
 
-https://databricks.com/blog/2015/02/02/an-introduction-to-json-support-in-spark-sql.html
+1) use the Apache Tez execution engine instead of Map-reduce.
+set hive.execution.engine=tez;
 
-https://stackoverflow.com/questions/29948789/how-to-parse-nested-json-objects-in-spark-sql
+2) USE VECTORIZATION
+set hive.vectorized.execution.enabled = true;
 
+set hive.vectorized.execution.reduce.enabled = true;
+
+3) COST BASED QUERY OPTIMIZATION
+
+set hive.cbo.enable=true;
+
+set hive.compute.query.using.stats=true;
+
+set hive.stats.fetch.column.stats=true;
+
+set hive.stats.fetch.partition.stats=true;
+
+Use analyze commands like below:
+
+analyze table tweets compute statistics for columns;
+
+some other tips -->
+Tip 1: Partitioning Hive Tables
+
+for example:- partition based on "comment_created_date" and "reply_date"
+
+Tip 2: Bucketing Hive Tables
+
+for example: "based on comment_id"
+example: CLUSTERED BY (comment_id) into 64 buckets
+
+set hive.enforce.bucketing = true;
+
+If the tables needs to be joined than the table can be bucketed on joining columns.
+
+SET hive.optimize.bucketmapjoin=true;
+
+Than The SELECT statement then can include a MAPJOIN statement
