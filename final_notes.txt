@@ -13,9 +13,21 @@ ROW FORMAT DELIMITED
 FIELDS TERMINATED BY ','
 STORED AS TEXTFILE;
 
+----------- new table could be like below -----
+CREATE TABLE IF NOT EXISTS comment_text (
+message STRING,
+h_id STRING)
+CLUSTERED BY (h_id) SORTED BY (message) into 64 buckets
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+----------- 
 Use below command to load data from local system to hive table.
 
 Load data local inpath '/home/dkothari/vi-com/BigData_Projects_New/comment_text' into table comment_text;
+
+select count(*) from comment_text; -- 859217
+select count(*) from (select distinct * from comment_text) as temp; -- 859183
 
 Below command is to create table for post_meta dataset files.
 
@@ -23,9 +35,19 @@ CREATE EXTERNAL TABLE IF NOT EXISTS post_meta (post_h_id STRING, post_created_ti
 STORED AS PARQUET 
 TBLPROPERTIES ('PARQUET.COMPRESS'='SNAPPY');
 
+--------- new table could be ----
+CREATE EXTERNAL TABLE IF NOT EXISTS post_meta (post_h_id STRING, post_created_time TIMESTAMP, name_h_id STRING, type STRING)
+PARTITIONED BY(type STRING)
+CLUSTERED BY(post_h_id) INTO 8 BUCKETS
+STORED AS PARQUET 
+TBLPROPERTIES ('PARQUET.COMPRESS'='SNAPPY');
+-----------------------
 below command is to load data from local system to post_meta tables.
 
 Load data local inpath '/home/dkothari/vi-com/BigData_Projects_New/post_meta' into table post_meta;
+
+select count(*) from post_meta; -- 40800
+select count(*) from (select distinct * from post_meta) as temp; -- 3531
 
 Below command is to create table for comment_info_jsonl dataset.
 
@@ -59,8 +81,12 @@ STORED AS TEXTFILE;
 
 Load data local inpath '/home/cloudera/vi-com/BigData_Projects_New/comment_info_jsonl' into table comment_info_jsonl;
 
+select count(*) from comment_info_jsonl; -- 744
+
 
 run below command to add json serde to parse json files properly.
 
 add jar /usr/lib/hive-hcatalog/share/hcatalog/hive-hcatalog-core.jar ;
 
+select count(*) from comment_info_exploded_with_replies_new; -- 5704
+select count(*) from (select distinct * from comment_info_exploded_with_replies_new) as temp; -- 5704
