@@ -91,4 +91,30 @@ select count(*) from comment_info_exploded_with_replies_new; -- 5704
 select count(*) from (select distinct * from comment_info_exploded_with_replies_new) as temp; -- 5704
 
 SET mapreduce.job.reduces=number Of Reducers
+1.SET hive.exec.dynamic.partition= true; 
 
+2. SET hive.exec.dynamic.partition.mode= nonstrict
+
+
+----------- not yet finalized ------
+Create table comment_info_exploded_with_replies_new as
+select distinct * from (select 
+post_data.h_id as post_id,
+comments_data.comment_count,
+comments_data.up_likes as comment_like_count,
+comments_data.h_id as comment_id,
+cast(from_unixtime(unix_timestamp(regexp_replace(comments_data.created_time, 'T',' '))) as timestamp) as comment_created_time,
+reply_data.comment_count as reply_count,
+cast(from_unixtime(unix_timestamp(regexp_replace(reply_data.created_time, 'T',' '))) as timestamp) as reply_created_time,
+reply_data.h_id as reply_id,
+reply_data.parent.h_id as reply_parent_comment_id,
+reply_data.up_likes as reply_like_count
+from comment_info_jsonl 
+LATERAL VIEW explode(posts.data) exploded_post as post_data
+lateral view explode(post_data.comments.data) comments_exploded as comments_data
+lateral view explode(comments_data.comments.data) reply_exploded as reply_data) as temp
+PARTITIONED BY(type STRING)
+CLUSTERED BY(post_h_id) INTO 8 BUCKETS
+STORED AS TEXTFILE;
+
+----------------
