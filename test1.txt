@@ -241,7 +241,8 @@ reply_data.up_likes as reply_like_count
 from comment_info_jsonl 
 LATERAL VIEW explode(posts.data) exploded_post as post_data
 lateral view explode(post_data.comments.data) comments_exploded as comments_data
-lateral view explode(comments_data.comments.data) reply_exploded as reply_data) as temp;
+lateral view explode(comments_data.comments.data) reply_exploded as reply_data) as temp
+;
 
 -----------------
 Drop table comment_info_exploded;
