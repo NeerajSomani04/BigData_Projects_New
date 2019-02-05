@@ -92,29 +92,34 @@ select count(*) from (select distinct * from comment_info_exploded_with_replies_
 
 SET mapreduce.job.reduces=number Of Reducers
 1.SET hive.exec.dynamic.partition= true; 
-
 2. SET hive.exec.dynamic.partition.mode= nonstrict
+3. partition column should be last column in selet query
 
 
 ----------- not yet finalized ------
-Create table comment_info_exploded_with_replies_new as
+Create EXTERNAL TABLE IF NOT EXISTS comment_info_exploded_with_replies_new_with_keys 
+(post_id STRING, Comment_count int, comment_like_count int, comment_id STRING,
+reply_count int, reply_created_time timestamp, reply_id STRING, reply_parent_comment_id STRING, reply_like_count int)
+PARTITIONED BY(comment_created_time timestamp)
+CLUSTERED BY(post_id, comment_id) INTO 16 BUCKETS
+STORED AS TEXTFILE;
+
+
+insert into comment_info_exploded_with_replies_new_with_keys PARTITION (comment_created_time)
 select distinct * from (select 
 post_data.h_id as post_id,
 comments_data.comment_count,
 comments_data.up_likes as comment_like_count,
 comments_data.h_id as comment_id,
-cast(from_unixtime(unix_timestamp(regexp_replace(comments_data.created_time, 'T',' '))) as timestamp) as comment_created_time,
 reply_data.comment_count as reply_count,
 cast(from_unixtime(unix_timestamp(regexp_replace(reply_data.created_time, 'T',' '))) as timestamp) as reply_created_time,
 reply_data.h_id as reply_id,
 reply_data.parent.h_id as reply_parent_comment_id,
-reply_data.up_likes as reply_like_count
+reply_data.up_likes as reply_like_count,
+cast(from_unixtime(unix_timestamp(regexp_replace(comments_data.created_time, 'T',' '))) as timestamp) as comment_created_time
 from comment_info_jsonl 
 LATERAL VIEW explode(posts.data) exploded_post as post_data
 lateral view explode(post_data.comments.data) comments_exploded as comments_data
-lateral view explode(comments_data.comments.data) reply_exploded as reply_data) as temp
-PARTITIONED BY(type STRING)
-CLUSTERED BY(post_h_id) INTO 8 BUCKETS
-STORED AS TEXTFILE;
+lateral view explode(comments_data.comments.data) reply_exploded as reply_data) as temp;
 
 ----------------
