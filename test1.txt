@@ -342,28 +342,8 @@ reply_date and top_level_comment_date should be greater than 2018-01-10
 group by post_type
 
 ----------------------------
-select count(distinct temp1.comment_id) as total_comments
+select temp1.post_type, count(distinct temp1.comment_id) as total_comments, sum(comment_like_count) as total_up_likes
 from 
-(select CIE.*, PM.type as post_type,
-row_number() over (partition by comment_id order by comment_created_time desc, comment_like_count desc, comment_count desc) as row_num
-from comment_info_exploded_with_replies_New CIE 
-INNER JOIN post_meta PM
-on PM.post_h_id = CIE.post_id
-INNER JOIN comment_text CT_top
-ON CT_top.h_id = CIE.comment_id 
-INNER JOIN comment_text CT_reply
-ON CT_reply.h_id = CIE.reply_id) 
-as temp1
-where temp1.row_num = 1 
-and to_date(temp1.comment_created_time) > cast('2018-01-10' as date)
-and to_date(temp1.reply_created_time) > cast('2018-01-10' as date)
-group by temp1.post_type
-order by total_comments desc
-limit 1;
-
-
-------
-select * from 
 (select CIE.*, PM.type as post_type,
 row_number() over (partition by comment_id order by comment_created_time desc, comment_like_count desc, comment_count desc) as row_num
 from comment_info_exploded_with_replies_New CIE 
@@ -377,7 +357,10 @@ as temp1
 where temp1.row_num = 1 
 and to_date(temp1.comment_created_time) > '2018-01-10'
 and to_date(temp1.reply_created_time) > '2018-01-10'
+group by temp1.post_type;
 
+
+---------------
 
 for question 3) 
 select page names, page ids, avg_length
