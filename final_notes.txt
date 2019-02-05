@@ -4,50 +4,59 @@ CREATE DATABASE IF NOT EXISTS Viacom_Test;
 
 Below command to create hive table for comment_text dataset.
 
--- Drop table comment_text; -- use this command to drop table if needed.
+-- Drop table comment_text_STG; -- use this command to drop table if needed.
 
-CREATE TABLE IF NOT EXISTS comment_text (
+CREATE EXTERNAL TABLE IF NOT EXISTS comment_text_STG (
 message STRING,
 h_id STRING)
-ROW FORMAT DELIMITED
-FIELDS TERMINATED BY ','
-STORED AS TEXTFILE;
-
------------ new table could be like below -----
-CREATE TABLE IF NOT EXISTS comment_text (
-message STRING,
-h_id STRING)
-CLUSTERED BY (h_id) SORTED BY (message) into 64 buckets
 ROW FORMAT DELIMITED
 FIELDS TERMINATED BY ','
 STORED AS TEXTFILE;
 ----------- 
 Use below command to load data from local system to hive table.
 
-Load data local inpath '/home/dkothari/vi-com/BigData_Projects_New/comment_text' into table comment_text;
+Load data local inpath '/home/dkothari/vi-com/BigData_Projects_New/comment_text' into table comment_text_stg;
 
-select count(*) from comment_text; -- 859217
-select count(*) from (select distinct * from comment_text) as temp; -- 859183
+----------- new table could be like below -----
+CREATE EXTERNAL TABLE IF NOT EXISTS comment_text (
+message STRING,
+h_id STRING)
+CLUSTERED BY (h_id) SORTED BY (message) into 64 buckets
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+INSERT overwrite table comment_text select distinct * from comment_text_stg;
+
+select count(*) from comment_text_stg; -- 859217
+select count(*) from (select distinct * from comment_text_stg) as temp; -- 859183
 
 Below command is to create table for post_meta dataset files.
 
-CREATE EXTERNAL TABLE IF NOT EXISTS post_meta (post_h_id STRING, post_created_time TIMESTAMP, name_h_id STRING, type STRING) 
+Drop table post_meta_stg;
+
+CREATE EXTERNAL TABLE IF NOT EXISTS post_meta_stg (post_h_id STRING, post_created_time TIMESTAMP, name_h_id STRING, type STRING) 
 STORED AS PARQUET 
 TBLPROPERTIES ('PARQUET.COMPRESS'='SNAPPY');
 
+below command is to load data from local system to post_meta tables.
+
+Load data local inpath '/home/dkothari/vi-com/BigData_Projects_New/post_meta' into table post_meta_stg;
+
+select count(*) from post_meta_stg; -- 40800
+select count(*) from (select distinct * from post_meta_stg) as temp; -- 3531
+
 --------- new table could be ----
-CREATE EXTERNAL TABLE IF NOT EXISTS post_meta (post_h_id STRING, post_created_time TIMESTAMP, name_h_id STRING, type STRING)
+CREATE EXTERNAL TABLE IF NOT EXISTS post_meta (post_h_id STRING, post_created_time TIMESTAMP, name_h_id STRING)
 PARTITIONED BY(type STRING)
-CLUSTERED BY(post_h_id) INTO 8 BUCKETS
+CLUSTERED BY(post_h_id) SORTED BY (post_h_id) INTO 8 BUCKETS
 STORED AS PARQUET 
 TBLPROPERTIES ('PARQUET.COMPRESS'='SNAPPY');
 -----------------------
-below command is to load data from local system to post_meta tables.
 
-Load data local inpath '/home/dkothari/vi-com/BigData_Projects_New/post_meta' into table post_meta;
+INSERT overwrite table post_meta PARTITION (type) select distinct * from post_meta_stg;
 
-select count(*) from post_meta; -- 40800
-select count(*) from (select distinct * from post_meta) as temp; -- 3531
+-----------------------------
 
 Below command is to create table for comment_info_jsonl dataset.
 
