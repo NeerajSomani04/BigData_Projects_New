@@ -105,7 +105,7 @@ CLUSTERED BY(post_id, comment_id) INTO 16 BUCKETS
 STORED AS TEXTFILE;
 
 
-insert into comment_info_exploded_with_replies_new_with_keys PARTITION (comment_created_time)
+Insert overwrite table comment_info_exploded_with_replies_new_with_keys PARTITION (comment_created_time)
 select distinct * from (select 
 post_data.h_id as post_id,
 comments_data.comment_count,
