@@ -361,10 +361,12 @@ order by avg_length_per_comment desc;
 for question 4)
 
 -----------
-select page_name, post_id, comment_id, comment_text, count(reply_id), 
+select CIE_2.post_id as post_id, temp2.comment_id, temp2.number_replies, 
+from comment_info_exploded_with_replies_New CIE_2
+INNER JOIN 
+(select comment_id, count(reply_id) as number_replies
 from 
-(select PM.name_h_id as page_name, CIE.post_id as post_id, CT_top.h_id as comment_id, CT_reply.h_id as reply_id, 
-CT_top.message as comment_text, 
+(select CT_top.h_id as comment_id, CT_reply.h_id as reply_id, 
 row_number() over (partition by comment_id order by comment_created_time desc, comment_like_count desc, comment_count desc) as row_num
 from comment_info_exploded_with_replies_New CIE 
 INNER JOIN post_meta PM
@@ -374,9 +376,11 @@ ON CT_top.h_id = CIE.comment_id
 INNER JOIN comment_text CT_reply
 ON CT_reply.h_id = CIE.reply_id) 
 as temp1
-where temp1.row_num = 1 
+where temp1.row_num = 1
 group by temp1.comment_id
-
+order by number_replies desc 
+limit 5) as temp2
+ON CIE_2.comment_id = temp2.comment_id
 
 
 
