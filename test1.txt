@@ -227,7 +227,8 @@ lateral view explode(comments_data.comments.data) reply_exploded as reply_data;
 drop table comment_info_exploded_with_replies_new;
 
 Create table comment_info_exploded_with_replies_new as
-select distinct * from (select 
+select distinct * from (select
+h_id as page_id,
 post_data.h_id as post_id,
 comments_data.comment_count,
 comments_data.up_likes as comment_like_count,
@@ -241,8 +242,7 @@ reply_data.up_likes as reply_like_count
 from comment_info_jsonl 
 LATERAL VIEW explode(posts.data) exploded_post as post_data
 lateral view explode(post_data.comments.data) comments_exploded as comments_data
-lateral view explode(comments_data.comments.data) reply_exploded as reply_data) as temp
-;
+lateral view explode(comments_data.comments.data) reply_exploded as reply_data) as temp;
 
 -----------------
 Drop table comment_info_exploded;
@@ -271,76 +271,50 @@ LATERAL VIEW explode(posts.data) exploded_post as post_data
 lateral view explode(post_data.comments.data) comments_exploded as comments_data) as temp;
 
 
-select cast(regexp_replace(comments_data.created_time, 'T',' ') as timestamp) as comment_created_time
-from comment_info_jsonl 
-LATERAL VIEW explode(posts.data) exploded_post as post_data
-lateral view explode(post_data.comments.data) comments_exploded as comments_data;
-
-
 select count(*) from comment_info_exploded; -- 46422
 
 select count(*) from (select distinct * from comment_info_exploded) as temp; -- 15388
 
 
-select cast(to_date(from_unixtime(unix_timestamp(regexp_replace('2018-06-05T08:02:59Z', 'T',' ')))) as date);
 
-yyyy-MM-dd'T'hh:mm:ssZ
-
-
-select cast(to_date(from_unixtime(unix_timestamp(comments_data.created_time, 'yyyy-MM-ddThh:mm:ssZ'))) as date)
-
-
-select * 
-from comment_info_exploded CFE 
+---------------- few analysis points -----
+select count(*) from 
+(select CIE.*, PM.type as post_type,
+row_number() over (partition by comment_id order by comment_created_time desc, comment_like_count desc, comment_count desc) as row_num
+from comment_info_exploded_with_replies_New CIE 
 INNER JOIN post_meta PM
-on PM.post_h_id = CFE.post_id
-INNER JOIN comment_text CT
-ON CT.h_id = CFE.comment_id
-limit 5;
+on PM.post_h_id = CIE.post_id
+INNER JOIN comment_text CT_top
+ON CT_top.h_id = CIE.comment_id 
+INNER JOIN comment_text CT_reply
+ON CT_reply.h_id = CIE.reply_id) 
+as temp1
+where temp1.row_num = 1 
 
+Result : 2663
 
+--------------
+----- Here if we select only distinct rows ----
+---------------
+select count(*) from 
+(select distinct * from (select CIE.*, PM.type as post_type,
+row_number() over (partition by comment_id order by comment_created_time desc, comment_like_count desc, comment_count desc) as row_num
+from comment_info_exploded_with_replies_New CIE 
+INNER JOIN post_meta PM
+on PM.post_h_id = CIE.post_id
+INNER JOIN comment_text CT_top
+ON CT_top.h_id = CIE.comment_id 
+INNER JOIN comment_text CT_reply
+ON CT_reply.h_id = CIE.reply_id) 
+as temp1
+where temp1.row_num = 1) as temp2
 
+Result : 2663
 
-Links for comments and posts Hive data model 
-
-Nice hive example article:
-https://medium.com/datadriveninvestor/analyzing-twitter-feeds-using-hive-7e074025f295
-
-https://blog.cloudera.com/blog/2012/11/analyzing-twitter-data-with-hadoop-part-3-querying-semi-structured-data-with-hive/
-
-https://github.com/rcongiu/Hive-JSON-Serde
-
-https://www.google.com/search?q=relational+data+model+to+store+facebook+post+comments&tbm=isch&source=hp&safe=active&sa=X&ved=2ahUKEwiW2v2M7IzgAhXLT98KHWmnDscQsAR6BAgAEAE
-
-https://data.stackexchange.com/stackoverflow/query/new
-
-https://dba.stackexchange.com/questions/174878/how-to-store-likes-and-comments-of-posts-in-database
-
-https://www.slideshare.net/cloudera/nested-types-in-impala-55344174
-
-https://www.cloudera.com/documentation/enterprise/5-5-x/topics/impala_complex_types.html
-https://www.cloudera.com/documentation/enterprise/5-5-x/topics/impala_complex_types.html#complex_types_ex_hive_etl
-
-Below are few links to work on ElasticSearch for the data load and analysis:
-https://gist.github.com/vinodnerella/15dabed07ac4815e4792d63cf8e4ed51
-
-https://medium.com/@ashish_fagna/getting-started-with-elasticsearch-creating-indices-inserting-values-and-retrieving-data-e3122e9b12c6
-
-https://github.com/Moshe/elasticsearch_loader
-
-Elastic Search deep dive on linux academy
-https://dzone.com/articles/what-is-elasticsearch-and-how-it-can-be-useful
-
-https://www.elastic.co/blog/found-elasticsearch-as-nosql
+-------------------
 
 
 for question 2)
-
-count distinct comment_id 
-sum comment_like_count
-reply_date and top_level_comment_date should be greater than 2018-01-10
-group by post_type
-
 ----------------------------
 select temp1.post_type, count(distinct temp1.comment_id) as total_comments, sum(comment_like_count) as total_up_likes
 from 
@@ -363,14 +337,46 @@ group by temp1.post_type;
 ---------------
 
 for question 3) 
-select page names, page ids, avg_length
 
-get distinct post_id, comment_id and reply_id from comment_exploded table
-join comment_id and reply_id with comment_text table to get "message" field for each "ID"s
-calculate length of each message
-calculate avg = sum(length of each message) / count (messages)
-group by page_id
-order by avg desc
-limit 5
+--------
+select page_id, page_name, 
+cast(((avg(length(comment_text)) + avg(length(reply_text)))/2) as SMALLINT) as avg_length_per_comment
+from 
+(select CIE.page_id as page_id, CT_top.h_id as comment_id, CT_reply.h_id as reply_id, CT_top.message as comment_text, CT_reply.message as reply_text, PM.name_h_id as page_name,
+row_number() over (partition by comment_id order by comment_created_time desc, comment_like_count desc, comment_count desc) as row_num
+from comment_info_exploded_with_replies_New CIE 
+INNER JOIN post_meta PM
+on PM.post_h_id = CIE.post_id
+INNER JOIN comment_text CT_top
+ON CT_top.h_id = CIE.comment_id 
+INNER JOIN comment_text CT_reply
+ON CT_reply.h_id = CIE.reply_id) 
+as temp1
+where temp1.row_num = 1 
+group by temp1.page_id, temp1.page_name
+order by avg_length_per_comment desc;
+
+-----
+
+for question 4)
+
+-----------
+select page_name, post_id, comment_id, comment_text, count(reply_id), 
+from 
+(select PM.name_h_id as page_name, CIE.post_id as post_id, CT_top.h_id as comment_id, CT_reply.h_id as reply_id, 
+CT_top.message as comment_text, 
+row_number() over (partition by comment_id order by comment_created_time desc, comment_like_count desc, comment_count desc) as row_num
+from comment_info_exploded_with_replies_New CIE 
+INNER JOIN post_meta PM
+on PM.post_h_id = CIE.post_id
+INNER JOIN comment_text CT_top
+ON CT_top.h_id = CIE.comment_id 
+INNER JOIN comment_text CT_reply
+ON CT_reply.h_id = CIE.reply_id) 
+as temp1
+where temp1.row_num = 1 
+group by temp1.comment_id
+
+
 
 
