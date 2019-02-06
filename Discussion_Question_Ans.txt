@@ -1,0 +1,4 @@
+Discussion Questions:
+
+1. How you would approach this problem if each dataset was 100 GB instead of less than 100 MB per dataset like in the assignment. For each dataset type, how would you handle processing at this scale. How would your implementations change from this assignment? If you would choose different pipelines or tools, please discuss why you made those choices.
+
