@@ -1,9 +1,16 @@
 Environment set-up commands -->
+----------------
+This will help in resolving memory issue while working with joins
+--------------------------
 set hive.enforce.bucketing = true;
 set hive.auto.convert.join = false; 
 set hive.optimize.bucketmapjoin = true;
 set hive.optimize.bucketmapjoin.sortedmerge = true;
 set hive.exec.parallel=true;
+SET hive.exec.dynamic.partition= true; 
+SET hive.exec.dynamic.partition.mode= nonstrict;
+
+Notes:- partition column should be last column in selet query
 
 Below command to create Hive database --> 
 
@@ -105,11 +112,6 @@ add jar /usr/lib/hive-hcatalog/share/hcatalog/hive-hcatalog-core.jar ;
 select count(*) from comment_info_exploded_with_replies_new; -- 5704
 select count(*) from (select distinct * from comment_info_exploded_with_replies_new) as temp; -- 5704
 
-SET mapreduce.job.reduces=number Of Reducers
-1. SET hive.exec.dynamic.partition= true; 
-2. SET hive.exec.dynamic.partition.mode= nonstrict;
-3. partition column should be last column in selet query
-
 
 ----------- finalized ------
 Drop table comment_info_exploded_with_replies_new_with_keys;
@@ -118,7 +120,7 @@ Create EXTERNAL TABLE IF NOT EXISTS comment_info_exploded_with_replies_new_with_
 (page_id STRING, post_id STRING, Comment_count int, comment_like_count int, comment_id STRING, comment_created_time timestamp,
 reply_count int, reply_created_time timestamp, reply_id STRING, reply_parent_comment_id STRING, reply_like_count int)
 PARTITIONED BY(comment_created_date date)
-CLUSTERED BY(post_id, comment_id) INTO 16 BUCKETS
+CLUSTERED BY(post_id, comment_id, reply_id) INTO 32 BUCKETS
 STORED AS TEXTFILE;
 
 
@@ -139,35 +141,8 @@ cast(cast(from_unixtime(unix_timestamp(regexp_replace(comments_data.created_time
 from comment_info_jsonl 
 LATERAL VIEW explode(posts.data) exploded_post as post_data
 lateral view explode(post_data.comments.data) comments_exploded as comments_data
-lateral view explode(comments_data.comments.data) reply_exploded as reply_data) as temp;
-
-----------------
-This will help in resolving memory issue while working with joins
---------------------------
-set hive.enforce.bucketing = true;
-set hive.auto.convert.join = false; 
-set hive.optimize.bucketmapjoin = true;
-set hive.optimize.bucketmapjoin.sortedmerge = true;
-set hive.exec.parallel=true;
-
-
-
-now re-generating query for unique comment_id, reply_id combination
-
-select CIE.comment_id, CIE.reply_id, count(*) as count
-from post_meta PM
-INNER JOIN  comment_info_exploded_with_replies_new_with_keys CIE ON (PM.post_h_id = CIE.post_id)
-INNER JOIN comment_text CT_top ON (CT_top.h_id = CIE.comment_id)
-INNER JOIN comment_text CT_reply ON (CT_reply.h_id = CIE.reply_id)
-group by CIE.comment_id, CIE.reply_id
-having count(*) > 1 limit 50;
-
-
-where CT_top.h_id = 'MTAxNTU1Mjg1OTIzMDQwMjJfMTAxNTU1MzA0MjAxMDQwMjI'
-order by CIE.reply_created_time desc;
------
-
-
+lateral view explode(comments_data.comments.data) reply_exploded as reply_data) as temp
+CLUSTERED BY (temp.post_id, temp.comment_id, temp.reply_id) ;
 
 
 ----------
@@ -210,7 +185,24 @@ group by temp1.name_h_id, temp1.post_id, temp1.comment_id
 order by total_replies_per_comment desc
 limit 30;
 
-
+---
+select * from (
+select temp1.comment_id, count(distinct temp1.reply_id) as total_replies_per_comment,
+dense_rank() over (order by count(distinct temp1.reply_id) desc) as dense_rank_num
+from 
+(
+select CIE.reply_id, CIE.comment_id,
+row_number() over (partition by comment_id, reply_id order by comment_created_time desc, comment_like_count desc, comment_count desc, reply_created_time desc, reply_like_count desc, reply_count desc) as row_num
+from post_meta PM
+INNER JOIN  comment_info_exploded_with_replies_new_with_keys CIE ON (PM.post_h_id = CIE.post_id)
+INNER JOIN comment_text CT_top ON (CT_top.h_id = CIE.comment_id)
+INNER JOIN comment_text CT_reply ON (CT_reply.h_id = CIE.reply_id)
+) as temp1
+where temp1.row_num = 1 
+group by temp1.comment_id
+order by total_replies_per_comment desc) as temp2
+where temp2.dense_rank_num < 6
+limit 30;
 -------------------------------------------------------------
 below could be a great example for multiple records for the same combination of comment_id and reply_id
 
