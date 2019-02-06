@@ -189,6 +189,29 @@ limit 1;
 
 -------------------------------------------------------------
 
+----------
+------- Below is the solution for question 4  ------
+-----------
+--- Below solution is incorrect because we don't need to group by temp1.name_h_id, temp1.post_id, ------ so correct it
+
+select temp1.name_h_id, temp1.post_id, temp1.comment_id, count(distinct temp1.reply_id) as total_replies_per_comment,
+dense_rank() over (order by count(distinct temp1.reply_id) desc)
+from 
+(
+select PM.name_h_id, CIE.post_id, CIE.reply_id, CIE.comment_id,
+row_number() over (partition by comment_id, reply_id order by comment_created_time desc, comment_like_count desc, comment_count desc, reply_created_time desc, reply_like_count desc, reply_count desc) as row_num
+from post_meta PM
+INNER JOIN  comment_info_exploded_with_replies_new_with_keys CIE ON (PM.post_h_id = CIE.post_id)
+INNER JOIN comment_text CT_top ON (CT_top.h_id = CIE.comment_id)
+INNER JOIN comment_text CT_reply ON (CT_reply.h_id = CIE.reply_id)
+) as temp1
+where temp1.row_num = 1
+group by temp1.name_h_id, temp1.post_id, temp1.comment_id
+order by total_replies_per_comment desc
+limit 30;
+
+
+-------------------------------------------------------------
 below could be a great example for multiple records for the same combination of comment_id and reply_id
 
 example:  total combinations are 5
