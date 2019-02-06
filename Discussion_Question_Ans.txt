@@ -2,3 +2,16 @@ Discussion Questions:
 
 1. How you would approach this problem if each dataset was 100 GB instead of less than 100 MB per dataset like in the assignment. For each dataset type, how would you handle processing at this scale. How would your implementations change from this assignment? If you would choose different pipelines or tools, please discuss why you made those choices.
 
+Answer: 
+The first thing that comes in my mind is to avoid Hive queries on top of Map-reduce and set-up something like Hive-on-Spark or Hive-on-Tez. Spark and Tez are great tools for fast processing at large scale. Secondly, There are multiple Hive and Spark related environment settings that could be configured to imporve the performance. Apart from this, I would change the partition key and bucketing key to improve the performance, for example: I would like to partition based of "Year", "Month" and "Date" part of the Comment_created_time and reply_created_time field. Since, data volume per day increases at such a large scale it will help in performance. I will try this one more approach and see the performance impact, will try to create a dynamic lookup cache table for not frequently changed fields. for example, this lookup table can have fields like comment_id, comment_text, post_id, page_id and page_name. This will help in joining and processing records at scale. 
+
+2. What about if you expected 10 GB of new data, for each source, daily, for the next year?
+For each dataset type, how would you handle processing at this scale. How would your
+implementations change this assignment? If you would choose different pipelines or
+tools than (1), please discuss why you made those choices.
+
+Answer: I covered most of my points in the above answer.
+
+3. How would you go about deploying this solution to a production environment? Would
+you make any changes to the architecture outline above? Please discuss any
+anticipated methods for automating deployment, monitoring ongoing processes, ensuring the deployed solution is robust (as little downtime as possible), and technologies used.
