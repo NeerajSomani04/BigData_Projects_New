@@ -147,7 +147,7 @@ CLUSTER BY (temp.post_id, temp.comment_id, temp.reply_id) ;
 
 ----------
 ------- Below is the solution for question 1 ------
------------
+----------- 
 select temp1.comment_created_date as comment_created_date, count(distinct temp1.comment_id) as total_comments  from 
 (
 select CIE.comment_created_date, CIE.comment_id,
@@ -166,7 +166,7 @@ limit 1;
 
 ----------
 ------- Below is the solution for question 4  ------
------------
+----------- 4 min 27 sec ----
 
 select distinct PM1.name_h_id, CIE1.post_id, temp3.comment_id, temp3.total_replies_per_comment, CT.message from 
 ( select * from (
