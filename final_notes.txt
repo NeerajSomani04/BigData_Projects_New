@@ -19,6 +19,17 @@ SET hive.exec.dynamic.partition.mode= nonstrict;
 set hive.vectorized.execution.enabled = true;
 set hive.vectorized.execution.reduce.enabled = true;
 
+CBO Environment related settings:
+set hive.cbo.enable=true;
+set hive.compute.query.using.stats=true;
+set hive.stats.fetch.column.stats=true;
+set hive.stats.fetch.partition.stats=true;
+
+analyze table comment_text compute statistics for columns;
+analyze table post_meta compute statistics for columns;
+analyze table comment_info_exploded compute statistics for columns;
+
+
 CREATE EXTERNAL TABLE IF NOT EXISTS comment_text (
 message STRING,
 h_id STRING)
