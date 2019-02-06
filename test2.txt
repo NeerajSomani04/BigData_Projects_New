@@ -1,4 +1,6 @@
 Hive best practice tips -->
+https://www.quora.com/What-are-the-ways-to-improve-hive-query-performance-other-than-Impala-Spark-and-Tez
+
 
 1) use the Apache Tez execution engine instead of Map-reduce.
 set hive.execution.engine=tez;
