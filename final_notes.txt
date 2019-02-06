@@ -16,6 +16,8 @@ set hive.optimize.bucketmapjoin.sortedmerge = true;
 set hive.exec.parallel=true;
 SET hive.exec.dynamic.partition= true; 
 SET hive.exec.dynamic.partition.mode= nonstrict;
+set hive.vectorized.execution.enabled = true;
+set hive.vectorized.execution.reduce.enabled = true;
 
 CREATE EXTERNAL TABLE IF NOT EXISTS comment_text (
 message STRING,
