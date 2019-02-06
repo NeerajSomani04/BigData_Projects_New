@@ -101,7 +101,7 @@ h_id: STRING
 ROW FORMAT SERDE 'org.apache.hive.hcatalog.data.JsonSerDe'
 STORED AS TEXTFILE;
 
-Load data local inpath '/home/cloudera/vi-com/BigData_Projects_New/comment_info_jsonl' into table comment_info_jsonl;
+Load data local inpath '/home/dkothari/vi-com/BigData_Projects_New/comment_info_jsonl' into table comment_info_jsonl;
 
 select count(*) from comment_info_jsonl; -- 744
 
@@ -122,7 +122,6 @@ reply_count int, reply_created_time timestamp, reply_id STRING, reply_parent_com
 PARTITIONED BY(comment_created_date date)
 CLUSTERED BY(post_id, comment_id, reply_id) INTO 32 BUCKETS
 STORED AS TEXTFILE;
-
 
 Insert overwrite table comment_info_exploded_with_replies_new_with_keys PARTITION (comment_created_date)
 select distinct * from (select
