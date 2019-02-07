@@ -3,15 +3,35 @@ Discussion Questions:
 1. How you would approach this problem if each dataset was 100 GB instead of less than 100 MB per dataset like in the assignment. For each dataset type, how would you handle processing at this scale. How would your implementations change from this assignment? If you would choose different pipelines or tools, please discuss why you made those choices.
 
 Answer: 
-The first thing that comes in my mind is to avoid Hive queries on top of Map-reduce and set-up something like Hive-on-Spark or Hive-on-Tez. Spark and Tez are great tools for fast processing at large scale. Secondly, There are multiple Hive and Spark related environment settings that could be configured to imporve the performance. Apart from this, I would change the partition key and bucketing key to improve the performance, for example: I would like to partition based of "Year", "Month" and "Date" part of the Comment_created_time and reply_created_time field. Since, data volume per day increases at such a large scale it will help in performance. I will try this one more approach and see the performance impact, will try to create a dynamic lookup cache table for not frequently changed fields. for example, this lookup table can have fields like comment_id, comment_text, post_id, page_id and page_name. This will help in joining and processing records at scale. 
+Below are few points that I would consider:
+1. Configure the Hive and Spark environment properly. For example, calculate and analyze on setting up the spark-shell parameters like "executor-memory", "executor-cores", "num-executors", and many more.
+2. I would set-up hive to store and parse raw data and all processing work can be done in spark. for example, all joins, aggregation, filter and window functions can be implemented in spark.
+3. I would partition the data differently. I would generate hash using the date and 1 or 2 primary keys and use it as partition column which would imporve the performance. for example, in-case of "post_meta" dataset, I would partition the data based on the combination of day in form "YYYYMMDD" and "Post_id". In-case of "Comment_info_jsonl" dataset, I would partition it based on combination of day in form "YYYYMMDD" and "Post_id" and "Comment_id". This way there will be small chunck on partition that can be processed in parallel.
+4. I would highly use SparkSQL to run any query on Hive and any processing related activity using spark Dataframe API.
+5. One important design approach would be perform all the tasks on cloud, means utilizing cloud capabilities like, cloud storage, cloud processing power with Auto-scaling feature, etc.
+
+Below are few links that I read and found useful:
+https://code.fb.com/core-data/apache-spark-scale-a-60-tb-production-use-case/
+https://codeburst.io/make-your-apache-spark-programs-run-faster-7c7c258c0186
 
 2. What about if you expected 10 GB of new data, for each source, daily, for the next year?
 For each dataset type, how would you handle processing at this scale. How would your
 implementations change this assignment? If you would choose different pipelines or
 tools than (1), please discuss why you made those choices.
 
-Answer: I covered most of my points in the above answer.
+Answer: I would consider all the points discussed for question 1 but few chages: 
+1. I would design my job to run daily only on the newly created individual day partition and perform comparision of my current result with previous day result to calculate most up-to-date result.
+2. Another way to perform this is by using streaming capabilities of spark and cloud.
+
 
 3. How would you go about deploying this solution to a production environment? Would
 you make any changes to the architecture outline above? Please discuss any
 anticipated methods for automating deployment, monitoring ongoing processes, ensuring the deployed solution is robust (as little downtime as possible), and technologies used.
+
+Answer: Sorry, I have never implemented it. Although I read few articals, but realized that I don't have complete understanding on this and hence decided to not to answer it. But I am leanring and working towards it.
+
+Below are few links that I found useful:
+
+https://databricks.com/blog/2016/04/06/continuous-integration-and-delivery-of-apache-spark-applications-at-metacog.html
+https://www.ebayinc.com/stories/blogs/tech/zero-downtime-instant-deployment-and-rollback/
+https://spring.io/blog/2016/05/31/zero-downtime-deployment-with-a-database
