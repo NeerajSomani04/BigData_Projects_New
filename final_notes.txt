@@ -187,3 +187,36 @@ INNER JOIN post_meta PM1 ON (PM1.post_h_id = CIE1.post_id)
 INNER JOIN comment_text CT ON (CT.h_id = CIE1.comment_id)
 order by total_replies_per_comment desc;
 
+------
+running question 4 query in spark -->
+
+sqlContext.sql("select distinct PM1.name_h_id, CIE1.post_id, temp3.comment_id, temp3.total_replies_per_comment, CT.message from " + 
+" ( select * from ( " + 
+"select temp1.comment_id, count(distinct temp1.reply_id) as total_replies_per_comment, " + 
+"dense_rank() over (order by count(distinct temp1.reply_id) desc) as dense_rank_num " + 
+"from " + 
+" ( " + 
+"select CIE.comment_id, CIE.reply_id, " + 
+"row_number() over (partition by comment_id, reply_id order by comment_created_time desc, comment_like_count desc, comment_count desc, " + "reply_created_time desc, reply_like_count desc, reply_count desc) as row_num " + 
+"from post_meta PM " + 
+"INNER JOIN comment_info_exploded CIE ON (PM.post_h_id = CIE.post_id) " + 
+"INNER JOIN comment_text CT_top ON (CT_top.h_id = CIE.comment_id) " + 
+"INNER JOIN comment_text CT_reply ON (CT_reply.h_id = CIE.reply_id) " + 
+") as temp1 " + 
+"where temp1.row_num = 1 " + 
+"group by temp1.comment_id " + 
+"order by total_replies_per_comment desc) as temp2 " + 
+"where temp2.dense_rank_num < 6 ) as temp3 " + 
+"INNER JOIN comment_info_exploded CIE1 ON (temp3.comment_id = CIE1.comment_id) " + 
+"INNER JOIN post_meta PM1 ON (PM1.post_h_id = CIE1.post_id) " + 
+"INNER JOIN comment_text CT ON (CT.h_id = CIE1.comment_id) " + 
+"order by total_replies_per_comment desc").show
+
+
+----
+sqlContext.sql("select CIE.comment_id, CIE.reply_id, " + 
+"row_number() over (partition by comment_id, reply_id order by comment_created_time desc, comment_like_count desc, comment_count desc, " + "reply_created_time desc, reply_like_count desc, reply_count desc) as row_num " + 
+"from post_meta PM " + 
+"INNER JOIN comment_info_exploded CIE ON (PM.post_h_id = CIE.post_id) " + 
+"INNER JOIN comment_text CT_top ON (CT_top.h_id = CIE.comment_id) " + 
+"INNER JOIN comment_text CT_reply ON (CT_reply.h_id = CIE.reply_id)").show
